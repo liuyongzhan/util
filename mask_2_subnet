@@ -1,0 +1,125 @@
+
+
+def mask_2_subnet(category: str, mask: int):
+    """
+    通过私有IP地址类别和子网掩码位数，获取私有IP地址对应位置的可选值列表。
+    :param category:私有IP地址类别：A类：10.0.0.0~10.255.255.255；B类：172.16.0.0~172.31.255.255；C类：192.168.0.0~192.168.255.255
+    :param mask:掩码位数，当IP地址类别为A类和B类，有效范围：16-19；当IP地址类别为C类，有效范围为17-29
+    :return: dict，包含4个key，分别是a/b/c/d，对应IP中的a/b/c/d位置的可选列表(假设IP为: a.b.c.d)
+    """
+
+    if category not in ["A", "B", "C"]:
+        return "请输入有效的私有IP地址类别：A/B/C"
+
+    if category in ["A", "B"]:
+        if not 16 <= mask <= 29:
+            return "请输入有效的掩码，A类和B类私有IP地址的有效掩码为：16~29"
+    else:
+        if not 17 <= mask <= 29:
+            return "请输入有效的掩码，C类私有IP地址的有效掩码为：17~29"
+
+    a_dict = {
+        16: {"a": [10], "b": list(range(0, 256, 1)), "c": [0], "d": [0]},
+        17: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 128)), "d": [0]},
+        18: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 64)), "d": [0]},
+        19: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 32)), "d": [0]},
+        20: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 16)), "d": [0]},
+        21: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 8)), "d": [0]},
+        22: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 4)), "d": [0]},
+        23: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 2)), "d": [0]},
+        24: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 1)), "d": [0]},
+        25: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 128))},
+        26: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 64))},
+        27: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 32))},
+        28: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 16))},
+        29: {"a": [10], "b": list(range(0, 256, 1)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 8))},
+    }
+
+    b_dict = {
+        16: {"a": [172], "b": list(range(16, 32)), "c": [0], "d": [0]},
+        17: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 128)), "d": [0]},
+        18: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 64)), "d": [0]},
+        19: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 32)), "d": [0]},
+        20: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 16)), "d": [0]},
+        21: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 8)), "d": [0]},
+        22: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 4)), "d": [0]},
+        23: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 2)), "d": [0]},
+        24: {"a": [172], "b": list(range(16, 32)), "c": list(range(0, 256, 1)), "d": [0]},
+        25: {"a": [172], "b": list(range(0, 256, 128)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 128))},
+        26: {"a": [172], "b": list(range(0, 256, 128)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 64))},
+        27: {"a": [172], "b": list(range(0, 256, 128)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 32))},
+        28: {"a": [172], "b": list(range(0, 256, 128)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 16))},
+        29: {"a": [172], "b": list(range(0, 256, 128)), "c": list(range(0, 256, 1)), "d": list(range(0, 256, 8))},
+    }
+
+    c_dict = {
+        17: {"a": [192], "b": [168], "c": list(range(0, 256, 128)), "d": [0]},
+        18: {"a": [192], "b": [168], "c": list(range(0, 256, 64)), "d": [0]},
+        19: {"a": [192], "b": [168], "c": list(range(0, 256, 32)), "d": [0]},
+        20: {"a": [192], "b": [168], "c": list(range(0, 256, 16)), "d": [0]},
+        21: {"a": [192], "b": [168], "c": list(range(0, 256, 8)), "d": [0]},
+        22: {"a": [192], "b": [168], "c": list(range(0, 256, 4)), "d": [0]},
+        23: {"a": [192], "b": [168], "c": list(range(0, 256, 2)), "d": [0]},
+        24: {"a": [192], "b": [168], "c": list(range(0, 256, 1)), "d": [0]},
+        25: {"a": [192], "b": [168], "c": list(range(0, 256, 1)), "d": list(range(0, 256, 128))},
+        26: {"a": [192], "b": [168], "c": list(range(0, 256, 1)), "d": list(range(0, 256, 64))},
+        27: {"a": [192], "b": [168], "c": list(range(0, 256, 1)), "d": list(range(0, 256, 32))},
+        28: {"a": [192], "b": [168], "c": list(range(0, 256, 1)), "d": list(range(0, 256, 16))},
+        29: {"a": [192], "b": [168], "c": list(range(0, 256, 1)), "d": list(range(0, 256, 8))},
+    }
+
+    category_switch = {
+        "A": a_dict,
+        "B": b_dict,
+        "C": c_dict,
+    }
+    return category_switch[category].get(mask)
+
+
+if __name__ == "__main__":
+    print("================== A 类地址 ======================")
+    print(mask_2_subnet("A", 16))
+    print(mask_2_subnet("A", 17))
+    print(mask_2_subnet("A", 18))
+    print(mask_2_subnet("A", 19))
+    print(mask_2_subnet("A", 20))
+    print(mask_2_subnet("A", 21))
+    print(mask_2_subnet("A", 22))
+    print(mask_2_subnet("A", 23))
+    print(mask_2_subnet("A", 24))
+    print(mask_2_subnet("A", 25))
+    print(mask_2_subnet("A", 26))
+    print(mask_2_subnet("A", 27))
+    print(mask_2_subnet("A", 28))
+    print(mask_2_subnet("A", 29))
+
+    print("================== B 类地址 ======================")
+    print(mask_2_subnet("B", 16))
+    print(mask_2_subnet("B", 17))
+    print(mask_2_subnet("B", 18))
+    print(mask_2_subnet("B", 19))
+    print(mask_2_subnet("B", 20))
+    print(mask_2_subnet("B", 21))
+    print(mask_2_subnet("B", 22))
+    print(mask_2_subnet("B", 23))
+    print(mask_2_subnet("B", 24))
+    print(mask_2_subnet("B", 25))
+    print(mask_2_subnet("B", 26))
+    print(mask_2_subnet("B", 27))
+    print(mask_2_subnet("B", 28))
+    print(mask_2_subnet("B", 29))
+
+    print("================== C 类地址 ======================")
+    print(mask_2_subnet("C", 17))
+    print(mask_2_subnet("C", 18))
+    print(mask_2_subnet("C", 19))
+    print(mask_2_subnet("C", 20))
+    print(mask_2_subnet("C", 21))
+    print(mask_2_subnet("C", 22))
+    print(mask_2_subnet("C", 23))
+    print(mask_2_subnet("C", 24))
+    print(mask_2_subnet("C", 25))
+    print(mask_2_subnet("C", 26))
+    print(mask_2_subnet("C", 27))
+    print(mask_2_subnet("C", 28))
+    print(mask_2_subnet("C", 29))
