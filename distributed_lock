@@ -1,0 +1,100 @@
+
+import threading
+import time
+
+import redis
+
+redis_client = redis.Redis(host="localhost",
+                           port=6379,
+                           password="123456",
+                           db=8)
+
+
+class DistributedLock(object):
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def _get_lock_name(lock_name):
+        """
+        拼接锁的名称
+        :param lock_name: 旧的锁名称
+        :return: String: 新的锁名称
+        """
+        lock_name = f'lock_{lock_name}'
+        return lock_name
+
+    def lock(self, lock_name, lock_owner, expired=10):
+        """
+        申请锁
+        :param lock_name: 锁的名称
+        :param lock_owner: 锁的归属者
+        :param expired: 锁的过期时间
+        :return: boolean: True/False
+        """
+        lock_name = self._get_lock_name(lock_name)
+        # 申请锁的超时时间为600秒，可自行定义
+        _timeout = 600
+        # sleep的数值越小，支持的并发就越高
+        _sleep_time = 0.0001
+        # 系数
+        _c = int(1 / _sleep_time)
+        for _ in range(_timeout * _c):
+            # 申请锁，用set()代替setnx()，set具有原子性，可以同时设置锁的过期时间
+            # 给锁设置过期时间，防止死锁，例如防止程序意外崩溃不释放锁
+            # set()成功返回True，失败返回None
+            res = redis_client.set(lock_name, lock_owner, nx=True, ex=expired)
+            if res:
+                return True
+            else:
+                time.sleep(_sleep_time)
+        return False
+
+    def del_lock(self, lock_name, lock_owner):
+        """
+        释放锁
+        :param lock_name: 锁的名称
+        :param lock_owner: 锁的归属者
+        :return: boolean: True/False
+        """
+        lock_name = self._get_lock_name(lock_name)
+        # 使用官方推荐的lua脚本进行释放锁，将判断锁的归属与删除锁合并成一个事务，进行原子性操作，防止高并发下误删除锁
+        lua_script = """
+        if redis.call("get",KEYS[1]) == ARGV[1] then
+            return redis.call("del",KEYS[1])
+        else
+            return 0
+        end
+        """
+        cmd = redis_client.register_script(lua_script)
+        res = cmd(keys=[lock_name], args=[lock_owner])
+        return True if res == 1 else False
+
+
+# demo
+def _demo(_lock_name, _lock_owner):
+    # 申请锁
+    my_lock = DistributedLock()
+    my_lock.lock(_lock_name, _lock_owner)
+
+    # 业务代码
+    global test_num
+    test_num = test_num + 1
+    thread_name = threading.current_thread().name
+    print(f"{thread_name}，数值：{test_num}")
+    # time.sleep(0.5)
+
+    # 释放锁
+    my_lock.del_lock(_lock_name, _lock_owner)
+
+
+if __name__ == "__main__":
+    # 测试用的数值
+    test_num = 0
+    _thread_count = 100  # 并发100
+    _lock_name = 'my_lock_name'  # 锁的名称
+    _lock_owner = 'liuyongzhan'  # 锁的归属者，这个值要确保唯一
+    for i in range(_thread_count):
+        thread = threading.Thread(target=_demo, args=(_lock_name, _lock_owner))
+        thread.start()
